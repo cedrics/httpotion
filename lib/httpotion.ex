@@ -131,7 +131,7 @@ defmodule HTTPotion.Base do
           :ibrowse.send_req_direct(conn_pid, args[:url], args[:headers], args[:method], args[:body], args[:ib_options], args[:timeout])
         else
           :ibrowse.send_req(args[:url], args[:headers], args[:method], args[:body], args[:ib_options], args[:timeout])
-        end |> handle_response
+        end |> handle_response |> follow_redirect(options)
       end
 
       @doc "Deprecated form of `request`; body and headers are now options, see `request/3`."
@@ -173,6 +173,17 @@ defmodule HTTPotion.Base do
         end
       end
 
+      defp follow_redirect(%HTTPotion.Response{} = response, options) do
+        if HTTPotion.Response.redirect?(response) do
+          {:ok, location} = Dict.fetch(response.headers, :Location)
+          HTTPotion.request(:get, location, options)
+        else
+          response
+        end
+      end
+
+      defp follow_redirect(response), do: response
+
       @doc "A shortcut for `request(:get, url, options)`."
       def get(url,     options \\ []), do: request(:get, url, options)
       @doc "A shortcut for `request(:put, url, options)`."
@@ -204,6 +215,10 @@ defmodule HTTPotion do
 
   defmodule Response do
     defstruct status_code: nil, body: nil, headers: []
+
+    def redirect?(%__MODULE__{status_code: code}) do
+      code in 301..302
+    end
 
     def success?(%__MODULE__{ status_code: code }) do
       code in 200..299

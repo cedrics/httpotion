@@ -76,6 +76,12 @@ defmodule HTTPotionTest do
     assert_response HTTPotion.head('httpbin.org/get')
   end
 
+  test "follow redirect" do
+    assert_response HTTPotion.get("http://httpbin.org/absolute-redirect/5"), fn(response) ->
+      assert response.status_code == 200
+    end
+  end
+
   test "exception" do
     assert_raise HTTPotion.HTTPError, "econnrefused", fn ->
       HTTPotion.get("localhost:1")
