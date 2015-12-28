@@ -77,7 +77,7 @@ defmodule HTTPotionTest do
   end
 
   test "follow redirect" do
-    assert_response HTTPotion.get("http://httpbin.org/absolute-redirect/5"), fn(response) ->
+    assert_response HTTPotion.get("http://httpbin.org/redirect/5"), fn(response) ->
       assert response.status_code == 200
     end
   end

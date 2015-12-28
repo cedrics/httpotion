@@ -131,7 +131,7 @@ defmodule HTTPotion.Base do
           :ibrowse.send_req_direct(conn_pid, args[:url], args[:headers], args[:method], args[:body], args[:ib_options], args[:timeout])
         else
           :ibrowse.send_req(args[:url], args[:headers], args[:method], args[:body], args[:ib_options], args[:timeout])
-        end |> handle_response |> follow_redirect(options)
+        end |> handle_response |> follow_redirect(url, options)
       end
 
       @doc "Deprecated form of `request`; body and headers are now options, see `request/3`."
@@ -173,16 +173,28 @@ defmodule HTTPotion.Base do
         end
       end
 
-      defp follow_redirect(%HTTPotion.Response{} = response, options) do
+      defp follow_redirect(%HTTPotion.Response{} = response, initial_url, options) do
         if HTTPotion.Response.redirect?(response) do
           {:ok, location} = Dict.fetch(response.headers, :Location)
-          HTTPotion.request(:get, location, options)
+          absolute_location = ensure_absoulte_url(initial_url, location)
+          HTTPotion.request(:get, absolute_location, options)
         else
           response
         end
       end
 
       defp follow_redirect(response), do: response
+
+      defp ensure_absoulte_url(initial_url, location) do
+        if absolute_url?(location) do
+          location
+        else
+          uri = URI.parse(initial_url)
+          "#{uri.scheme}://#{uri.authority}" <> location
+        end
+      end
+
+      defp absolute_url?(url), do: URI.parse(url).authority
 
       @doc "A shortcut for `request(:get, url, options)`."
       def get(url,     options \\ []), do: request(:get, url, options)
