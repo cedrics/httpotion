@@ -77,14 +77,14 @@ defmodule HTTPotionTest do
   end
 
   test "follow redirect" do
-    assert_response HTTPotion.get("http://httpbin.org/redirect/5"), fn(response) ->
+    assert_response HTTPotion.get("http://httpbin.org/redirect/5", [follow_redirects: true]), fn(response) ->
       assert response.status_code == 200
     end
   end
 
   test "raises exception on a redirect loop" do
     assert_raise HTTPotion.HTTPError, "redirect loop", fn ->
-      HTTPotion.get("http://httpbin.org/redirect/11")
+      HTTPotion.get("http://httpbin.org/redirect/11", [follow_redirects: true])
     end
   end
 

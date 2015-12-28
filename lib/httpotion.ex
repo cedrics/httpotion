@@ -120,6 +120,7 @@ defmodule HTTPotion.Base do
       * `stream_to` - if you want to make an async request, the pid of the process
       * `direct` - if you want to use ibrowse's direct feature, the pid of
                   the worker spawned by `spawn_worker_process/2` or `spawn_link_worker_process/2`
+      * `follow_redirects` - if you want to automatically follow redirects
 
       Returns `HTTPotion.Response` or `HTTPotion.AsyncResponse` if successful.  
       Raises  `HTTPotion.HTTPError` if failed.
@@ -174,7 +175,7 @@ defmodule HTTPotion.Base do
       end
 
       defp follow_redirect(%HTTPotion.Response{} = response, initial_url, options) do
-        if HTTPotion.Response.redirect?(response) do
+        if HTTPotion.Response.redirect?(response) && Dict.get(options, :follow_redirects, false) do
           number_of_redirects_remaining = Dict.get(options, :redirects_remaining, 10)
           if number_of_redirects_remaining > 0 do
             {:ok, location} = Dict.fetch(response.headers, :Location)
