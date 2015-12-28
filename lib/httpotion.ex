@@ -175,15 +175,21 @@ defmodule HTTPotion.Base do
 
       defp follow_redirect(%HTTPotion.Response{} = response, initial_url, options) do
         if HTTPotion.Response.redirect?(response) do
-          {:ok, location} = Dict.fetch(response.headers, :Location)
-          absolute_location = ensure_absoulte_url(initial_url, location)
-          HTTPotion.request(:get, absolute_location, options)
+          number_of_redirects_remaining = Dict.get(options, :redirects_remaining, 10)
+          if number_of_redirects_remaining > 0 do
+            {:ok, location} = Dict.fetch(response.headers, :Location)
+            absolute_location = ensure_absoulte_url(initial_url, location)
+            options = Dict.put(options, :redirects_remaining, number_of_redirects_remaining - 1)
+            HTTPotion.request(:get, absolute_location, options)
+          else
+            raise HTTPotion.HTTPError, message: "redirect loop"
+          end
         else
           response
         end
       end
 
-      defp follow_redirect(response), do: response
+      defp follow_redirect(response, _, _), do: response
 
       defp ensure_absoulte_url(initial_url, location) do
         if absolute_url?(location) do

@@ -82,6 +82,12 @@ defmodule HTTPotionTest do
     end
   end
 
+  test "raises exception on a redirect loop" do
+    assert_raise HTTPotion.HTTPError, "redirect loop", fn ->
+      HTTPotion.get("http://httpbin.org/redirect/11")
+    end
+  end
+
   test "exception" do
     assert_raise HTTPotion.HTTPError, "econnrefused", fn ->
       HTTPotion.get("localhost:1")
